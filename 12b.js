@@ -24,7 +24,7 @@ app.get('/', (req, res) => {
       <input name="Marks" placeholder="Marks" type="number" required />
       <button>Submit</button>
     </form>
-    <a href="/noteligible">Show Not Eligible Students (Marks < 20)</a>
+    <a href="/noteligible">🖨️ Print Not Eligible Students (Marks < 20)</a>
   `);
 });
 
@@ -36,7 +36,7 @@ app.post('/', async (req, res) => {
       Marks: Number(req.body.Marks),
     };
     await studentCollection.insertOne(student);
-    res.redirect('/');
+    res.send('✅ Student added successfully. <a href="/">Back</a>');
   } catch (err) {
     console.error('❌ Error inserting student:', err);
     res.status(500).send('Error adding student');
@@ -46,14 +46,15 @@ app.post('/', async (req, res) => {
 app.get('/noteligible', async (req, res) => {
   try {
     const notEligibleStudents = await studentCollection.find({ Marks: { $lt: 20 } }).toArray();
-    const html = notEligibleStudents
-      .map(s => `${s.Name} (${s.USN}) - Marks: ${s.Marks}<br>`)
-      .join('') + '<br><a href="/">Back</a>';
-    res.send(html);
+    console.log('\n🚫 Students Not Eligible (Marks < 20):');
+    notEligibleStudents.forEach(s => {
+      console.log(`${s.Name} (${s.USN}) - Marks: ${s.Marks}`);
+    });
+    res.send("✅ List of not eligible students printed in terminal.<br><a href='/'>Back</a>");
   } catch (err) {
     console.error('❌ Error fetching students:', err);
     res.status(500).send('Error fetching students');
   }
 });
 
-app.listen(3002, () => console.log('✅ Server running at http://localhost:3002'));
+app.listen(3002, () => console.log('🚀 Server running at http://localhost:3002'));

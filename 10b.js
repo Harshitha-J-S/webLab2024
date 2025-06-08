@@ -17,6 +17,7 @@ MongoClient.connect(uri)
   })
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
+// Show the faculty form
 app.get('/', (req, res) => {
   res.send(`
     <form method="post">
@@ -26,10 +27,11 @@ app.get('/', (req, res) => {
       <input name="branch" placeholder="Branch" required />
       <button>Submit</button>
     </form>
-    <a href="/cseprofessors">Show CSE Professors</a>
+    <a href="/cseprofessors">🖨️ Print CSE Professors (Terminal)</a>
   `);
 });
 
+// Handle faculty submission
 app.post('/', async (req, res) => {
   try {
     const faculty = {
@@ -39,22 +41,26 @@ app.post('/', async (req, res) => {
       branch: req.body.branch
     };
     await facultyCollection.insertOne(faculty);
-    res.redirect('/');
+    res.send('✅ Faculty added successfully. <a href="/">Back</a>');
   } catch (err) {
     console.error('❌ Error inserting faculty:', err);
     res.status(500).send('Error adding faculty');
   }
 });
 
+// Print only CSE professors to terminal
 app.get('/cseprofessors', async (req, res) => {
   try {
     const profs = await facultyCollection.find({ branch: 'CSE', Title: 'PROFESSOR' }).toArray();
-    const html = profs.map(f => `${f.ID} - ${f.Name} - ${f.Title} - ${f.branch}<br>`).join('') + '<br><a href="/">Back</a>';
-    res.send(html);
+    console.log('\n👨‍🏫 CSE Professors:');
+    profs.forEach(f => {
+      console.log(`${f.ID} - ${f.Name} - ${f.Title} - ${f.branch}`);
+    });
+    res.send("✅ Printed CSE Professors to terminal.<br><a href='/'>Back</a>");
   } catch (err) {
     console.error('❌ Error fetching professors:', err);
     res.status(500).send('Error fetching professors');
   }
 });
 
-app.listen(3004, () => console.log('✅ Server running at http://localhost:3004'));
+app.listen(3004, () => console.log('🚀 Server running at http://localhost:3004'));

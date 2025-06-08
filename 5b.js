@@ -32,6 +32,7 @@ app.get('/', (req, res) => {
         <button type="submit">Add</button>
       </form>
       <a href="/all">View All</a>
+      <a href="/update">update</a>
     </body>
     </html>
   `);
@@ -48,27 +49,15 @@ app.post('/', async (req, res) => {
   }
 });
 
-// View All Students
+// View All Students (Printed to terminal)
 app.get('/all', async (req, res) => {
   try {
     const data = await studentCollection.find().toArray();
-    let html = `
-      <!DOCTYPE html>
-      <html>
-      <head><title>All Students</title></head>
-      <body>
-        <h2>All Students</h2><ul>
-    `;
+    console.log("\n📋 All Students:");
     data.forEach(stu => {
-      html += `<li>${stu.name} | ${stu.usn} | ${stu.dept} | ${stu.grade}</li>`;
+      console.log(`${stu.name} | ${stu.usn} | ${stu.dept} | ${stu.grade}`);
     });
-    html += `
-        </ul>
-        <a href="/">Add</a> | <a href="/update">Update</a>
-      </body>
-      </html>
-    `;
-    res.send(html);
+    res.send("✅ Student list printed to terminal.<br/><a href='/'>Back</a>");
   } catch (err) {
     console.error("❌ Fetch Error:", err);
     res.status(500).send("Error fetching students.");
@@ -89,24 +78,29 @@ app.get('/update', (req, res) => {
         <button type="submit">Update</button>
       </form>
       <a href="/all">View All</a>
+   
     </body>
     </html>
   `);
 });
 
-// Update grade in DB
+// Update grade in DB (Confirmation printed to terminal)
 app.post('/update', async (req, res) => {
   try {
-    await studentCollection.updateOne(
+    const result = await studentCollection.updateOne(
       { name: req.body.name },
       { $set: { grade: req.body.grade } }
     );
-    res.redirect('/all');
+    if (result.modifiedCount > 0) {
+      console.log(`✅ Updated grade for ${req.body.name} to ${req.body.grade}`);
+    } else {
+      console.log(`⚠️ No matching student found with name "${req.body.name}"`);
+    }
+    res.send("✅ Update processed. Check terminal for result.<br/><a href='/'>Back</a>");
   } catch (err) {
     console.error("❌ Update Error:", err);
     res.status(500).send("Error updating student.");
   }
 });
 
-// Start server
 app.listen(3001, () => console.log('✅ Server running at http://localhost:3001'));

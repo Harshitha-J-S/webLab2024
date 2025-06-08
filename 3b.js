@@ -55,16 +55,15 @@ app.post('/add', async (req, res) => {
   }
 });
 
-// Display high-salary employees
+// Log high-salary employees to terminal only
 app.get('/highsalary', async (req, res) => {
   try {
     const emps = await employeeCollection.find({ salary: { $gt: 50000 } }).toArray();
-    let html = `<h2>💰 Employees with Salary > ₹50,000</h2><ul>`;
+    console.log('\n💰 Employees with Salary > ₹50,000');
     emps.forEach(e => {
-      html += `<li>${e.emp_name} | ₹${e.salary} | ${e.job_title}</li>`;
+      console.log(`${e.emp_name} | ₹${e.salary} | ${e.job_title}`);
     });
-    html += `</ul><a href="/">⬅ Back</a>`;
-    res.send(html);
+    res.send("✅ High salary employees printed to terminal.<br/><a href='/'>⬅ Back</a>");
   } catch (err) {
     console.error('❌ Error:', err);
     res.status(500).send('❌ Error fetching employees.');

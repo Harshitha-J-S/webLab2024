@@ -40,16 +40,15 @@ app.post('/', async (req, res) => {
   }
 });
 
-// Show students with 'S' grade
+// Show students with 'S' grade (only print to terminal)
 app.get('/sgrade', async (req, res) => {
   try {
     const data = await studentCollection.find({ grade: 'S' }).toArray();
-    let html = `<h2>Students with 'S' Grade</h2><ul>`;
+    console.log("\n📚 Students with 'S' Grade:");
     data.forEach(d => {
-      html += `<li>${d.name} | ${d.usn} | ${d.grade}</li>`;
+      console.log(`${d.name} | ${d.usn} | ${d.grade}`);
     });
-    html += `</ul><a href="/">Back</a>`;
-    res.send(html);
+    res.send("✅ List of 'S' grade students printed in terminal.<br><a href='/'>Back</a>");
   } catch (err) {
     console.error("❌ Query Error:", err);
     res.status(500).send("Error fetching data.");

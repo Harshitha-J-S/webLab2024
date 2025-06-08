@@ -1,5 +1,4 @@
 const express = require('express');
-
 const { MongoClient } = require('mongodb');
 
 const app = express();
@@ -22,8 +21,8 @@ MongoClient.connect(uri)
 app.get('/', (req, res) => {
   res.send(`
     <form method="post">
-      <input name="USN" placeholder="USN" required/>
-      <input name="Name" placeholder="Name" required/>
+      <input name="USN" placeholder="USN" required />
+      <input name="Name" placeholder="Name" required />
       <select name="Company_name">
         <option>Infosys</option>
         <option>Google</option>
@@ -31,7 +30,7 @@ app.get('/', (req, res) => {
       </select>
       <button>Submit</button>
     </form>
-    <br><a href="/infosys">Show Infosys Selected</a>
+    <br><a href="/infosys">Print Infosys Selected (Terminal)</a>
   `);
 });
 
@@ -39,25 +38,26 @@ app.get('/', (req, res) => {
 app.post('/', async (req, res) => {
   try {
     await studentCollection.insertOne(req.body);
-    res.redirect('/');
+    res.send("✅ Student saved! <a href='/'>Back</a>");
   } catch (err) {
     console.error('❌ Insert Error:', err);
     res.status(500).send('Error saving student.');
   }
 });
 
-// Show students who selected Infosys
+// Print Infosys-selected students in terminal only
 app.get('/infosys', async (req, res) => {
   try {
     const infosysStudents = await studentCollection.find({ Company_name: 'Infosys' }).toArray();
-    const html = infosysStudents
-      .map(s => `${s.USN} - ${s.Name} <br>`)
-      .join('') + '<br><a href="/">Back</a>';
-    res.send(html);
+    console.log("\n🎓 Students selected by Infosys:");
+    infosysStudents.forEach(s => {
+      console.log(`${s.USN} - ${s.Name}`);
+    });
+    res.send("✅ Infosys-selected students printed in terminal.<br><a href='/'>Back</a>");
   } catch (err) {
     console.error('❌ Query Error:', err);
     res.status(500).send('Error fetching Infosys students.');
   }
 });
 
-app.listen(3000, () => console.log('✅ Server running at http://localhost:3000'));
+app.listen(3000, () => console.log('🚀 Server running at http://localhost:3000'));

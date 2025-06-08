@@ -55,28 +55,27 @@ app.post('/add', async (req, res) => {
   }
 });
 
-// Delete unpaid students
+// Delete unpaid students and log result to terminal
 app.get('/delete-unpaid', async (req, res) => {
   try {
     const result = await studentsCollection.deleteMany({ paid: false });
     console.log(`🗑️ Deleted ${result.deletedCount} unpaid students`);
-    res.send(`🗑️ ${result.deletedCount} unpaid student(s) deleted.`);
+    res.send(`🗑️ Deleted count logged in terminal.<br><a href="/">⬅ Back</a>`);
   } catch (err) {
     console.error("❌ Error:", err);
     res.status(500).send("❌ Failed to delete unpaid.");
   }
 });
 
-// View all students
+// Print all students to terminal
 app.get('/all', async (req, res) => {
   try {
     const data = await studentsCollection.find().toArray();
-    let html = `<h2>All Students</h2><ul>`;
+    console.log("\n📋 All Students:");
     data.forEach(s => {
-      html += `<li>${s.name} (${s.usn}) - Sem: ${s.sem}, Paid: ${s.paid}</li>`;
+      console.log(`${s.name} (${s.usn}) - Sem: ${s.sem}, Paid: ${s.paid}`);
     });
-    html += `</ul><a href="/">⬅ Back</a>`;
-    res.send(html);
+    res.send("📋 Student list printed to terminal.<br><a href='/'>⬅ Back</a>");
   } catch (err) {
     console.error("❌ Error:", err);
     res.status(500).send("❌ Failed to fetch data.");

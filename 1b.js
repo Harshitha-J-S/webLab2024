@@ -55,19 +55,20 @@ app.post('/add', async (req, res) => {
 });
 
 // Display students with CIE < 20
+// Display students with CIE < 20 in the terminal only
 app.get('/lowcie', async (req, res) => {
   try {
     const students = await studentsCollection.find({ cie: { $lt: 20 } }).toArray();
-    let html = `<h2>Students with CIE < 20</h2><ul>`;
+    console.log("\n📋 Students with CIE < 20:");
     students.forEach(s => {
-      html += `<li>${s.usn} - ${s.name} - ${s.subject_code} - CIE: ${s.cie}</li>`;
+      console.log(`${s.usn} - ${s.name} - ${s.subject_code} - CIE: ${s.cie}`);
     });
-    html += `</ul><a href="/">Go back</a>`;
-    res.send(html);
+    res.send("✅ Students with CIE < 20 printed to terminal.<br/><a href='/'>Go back</a>");
   } catch (err) {
     console.error("❌ Error fetching students:", err);
     res.status(500).send("Failed to fetch students.");
   }
 });
+
 
 app.listen(3000, () => console.log("🚀 Server running at http://localhost:3000"));
