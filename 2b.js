@@ -1,23 +1,21 @@
 const express = require('express');
-const mongoose = require('mongoose');
+const { MongoClient } = require('mongodb');
 const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/exam_fees', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB error:", err));
+const uri = 'mongodb://localhost:27017';
+const dbName = 'exam_fees';
+let studentsCollection;
 
-// Schema + Model
-const Student = mongoose.model('Student', new mongoose.Schema({
-  name: String,
-  usn: String,
-  sem: Number,
-  paid: Boolean
-}));
+// Connect to MongoDB
+MongoClient.connect(uri)
+  .then(client => {
+    console.log("✅ MongoDB connected");
+    const db = client.db(dbName);
+    studentsCollection = db.collection('students');
+  })
+  .catch(err => console.error("❌ MongoDB error:", err));
 
 // Serve HTML Form
 app.get('/', (req, res) => {
@@ -42,10 +40,14 @@ app.get('/', (req, res) => {
 // Handle Add Student
 app.post('/add', async (req, res) => {
   try {
-    // Convert string 'true'/'false' to Boolean
-    req.body.paid = req.body.paid === 'true';
-    const s = await Student.create(req.body);
-    console.log("✅ Added:", s);
+    const student = {
+      name: req.body.name,
+      usn: req.body.usn,
+      sem: parseInt(req.body.sem),
+      paid: req.body.paid === 'true'
+    };
+    const result = await studentsCollection.insertOne(student);
+    console.log("✅ Added:", result.insertedId);
     res.send("✅ Student added!");
   } catch (err) {
     console.error("❌ Error:", err);
@@ -56,7 +58,7 @@ app.post('/add', async (req, res) => {
 // Delete unpaid students
 app.get('/delete-unpaid', async (req, res) => {
   try {
-    const result = await Student.deleteMany({ paid: false });
+    const result = await studentsCollection.deleteMany({ paid: false });
     console.log(`🗑️ Deleted ${result.deletedCount} unpaid students`);
     res.send(`🗑️ ${result.deletedCount} unpaid student(s) deleted.`);
   } catch (err) {
@@ -68,7 +70,7 @@ app.get('/delete-unpaid', async (req, res) => {
 // View all students
 app.get('/all', async (req, res) => {
   try {
-    const data = await Student.find();
+    const data = await studentsCollection.find().toArray();
     let html = `<h2>All Students</h2><ul>`;
     data.forEach(s => {
       html += `<li>${s.name} (${s.usn}) - Sem: ${s.sem}, Paid: ${s.paid}</li>`;

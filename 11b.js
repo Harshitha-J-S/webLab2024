@@ -1,25 +1,61 @@
-const express = require('express'), mongoose = require('mongoose'), bodyParser = require('body-parser');
+const express = require('express');
+const bodyParser = require('body-parser');
+const { MongoClient } = require('mongodb');
+
 const app = express();
-app.use(bodyParser.urlencoded({extended:true}));
-mongoose.connect('mongodb://127.0.0.1:27017/AttendanceDB');
-const Student = mongoose.model('Student', {Name:String, USN:String, Attendance:Number});
+app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get('/', (req,res) => res.send(`
-<form method="post">
-<input name="Name" placeholder="Name"/>
-<input name="USN" placeholder="USN"/>
-<input name="Attendance" placeholder="Attendance %" type="number" step="0.01"/>
-<button>Submit</button></form>
-<a href="/lowattendance">Show Attendance < 75%</a>
-`));
+const uri = 'mongodb://127.0.0.1:27017';
+const dbName = 'AttendanceDB';
+let studentCollection;
 
-app.post('/', (req,res) => {
-  new Student({Name:req.body.Name, USN:req.body.USN, Attendance:+req.body.Attendance}).save().then(() => res.redirect('/'));
+// Connect to MongoDB
+MongoClient.connect(uri)
+  .then(client => {
+    console.log('✅ Connected to MongoDB');
+    const db = client.db(dbName);
+    studentCollection = db.collection('students');
+  })
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
+app.get('/', (req, res) => {
+  res.send(`
+    <form method="post">
+      <input name="Name" placeholder="Name" required />
+      <input name="USN" placeholder="USN" required />
+      <input name="Attendance" placeholder="Attendance %" type="number" step="0.01" required />
+      <button>Submit</button>
+    </form>
+    <a href="/lowattendance">Show Attendance < 75%</a>
+  `);
 });
 
-app.get('/lowattendance', async (req,res) => {
-  const low = await Student.find({Attendance: {$lt: 75}});
-  res.send(low.map(s => `${s.Name} (${s.USN}) - ${s.Attendance}%<br>`).join('') + '<br><a href="/">Back</a>');
+app.post('/', async (req, res) => {
+  try {
+    const student = {
+      Name: req.body.Name,
+      USN: req.body.USN,
+      Attendance: parseFloat(req.body.Attendance)
+    };
+    await studentCollection.insertOne(student);
+    res.redirect('/');
+  } catch (err) {
+    console.error('❌ Error inserting student:', err);
+    res.status(500).send('Error adding student');
+  }
+});
+
+app.get('/lowattendance', async (req, res) => {
+  try {
+    const lowAttendanceStudents = await studentCollection.find({ Attendance: { $lt: 75 } }).toArray();
+    const html = lowAttendanceStudents
+      .map(s => `${s.Name} (${s.USN}) - ${s.Attendance}%<br>`)
+      .join('') + '<br><a href="/">Back</a>';
+    res.send(html);
+  } catch (err) {
+    console.error('❌ Error fetching students:', err);
+    res.status(500).send('Error fetching students');
+  }
 });
 
 app.listen(3005, () => console.log('✅ Server running at http://localhost:3005'));

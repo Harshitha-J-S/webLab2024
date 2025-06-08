@@ -1,25 +1,21 @@
 const express = require('express');
-const mongoose = require('mongoose');
+const { MongoClient } = require('mongodb');
 const app = express();
 
 app.use(express.urlencoded({ extended: true }));
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/hr', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => console.log('✅ MongoDB connected'))
-  .catch(err => console.error('❌ MongoDB error:', err));
+const uri = 'mongodb://localhost:27017';
+const dbName = 'hr';
+let employeeCollection;
 
-// Mongoose Schema & Model
-const Employee = mongoose.model('Employee', new mongoose.Schema({
-  emp_name: String,
-  email: String,
-  phone: String,
-  hire_date: String,
-  job_title: String,
-  salary: Number,
-}));
+// Connect to MongoDB
+MongoClient.connect(uri)
+  .then(client => {
+    console.log('✅ MongoDB connected');
+    const db = client.db(dbName);
+    employeeCollection = db.collection('employees');
+  })
+  .catch(err => console.error('❌ MongoDB error:', err));
 
 // Serve HTML Form
 app.get('/', (req, res) => {
@@ -42,8 +38,16 @@ app.get('/', (req, res) => {
 // Add Employee
 app.post('/add', async (req, res) => {
   try {
-    const emp = await Employee.create(req.body);
-    console.log('✅ Added employee:', emp);
+    const employee = {
+      emp_name: req.body.emp_name,
+      email: req.body.email,
+      phone: req.body.phone,
+      hire_date: req.body.hire_date,
+      job_title: req.body.job_title,
+      salary: parseInt(req.body.salary)
+    };
+    const result = await employeeCollection.insertOne(employee);
+    console.log('✅ Added employee with ID:', result.insertedId);
     res.send('✅ Employee added! <a href="/">Back</a>');
   } catch (err) {
     console.error('❌ Error:', err);
@@ -54,7 +58,7 @@ app.post('/add', async (req, res) => {
 // Display high-salary employees
 app.get('/highsalary', async (req, res) => {
   try {
-    const emps = await Employee.find({ salary: { $gt: 50000 } });
+    const emps = await employeeCollection.find({ salary: { $gt: 50000 } }).toArray();
     let html = `<h2>💰 Employees with Salary > ₹50,000</h2><ul>`;
     emps.forEach(e => {
       html += `<li>${e.emp_name} | ₹${e.salary} | ${e.job_title}</li>`;

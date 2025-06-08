@@ -1,25 +1,60 @@
-const express = require('express'), mongoose = require('mongoose'), bodyParser = require('body-parser');
+const express = require('express');
+const bodyParser = require('body-parser');
+const { MongoClient } = require('mongodb');
+
 const app = express();
-app.use(bodyParser.urlencoded({extended:true}));
-mongoose.connect('mongodb://127.0.0.1:27017/ExamDB');
-const Student = mongoose.model('Student', {Name:String, USN:String, Marks:Number});
+app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get('/', (req,res) => res.send(`
-<form method="post">
-<input name="Name" placeholder="Name"/>
-<input name="USN" placeholder="USN"/>
-<input name="Marks" placeholder="Marks" type="number"/>
-<button>Submit</button></form>
-<a href="/noteligible">Show Not Eligible Students (Marks<20)</a>
-`));
+const uri = 'mongodb://127.0.0.1:27017';
+const dbName = 'ExamDB';
+let studentCollection;
 
-app.post('/', (req,res) => {
-  new Student({Name:req.body.Name, USN:req.body.USN, Marks:+req.body.Marks}).save().then(() => res.redirect('/'));
+MongoClient.connect(uri)
+  .then(client => {
+    console.log('✅ Connected to MongoDB');
+    const db = client.db(dbName);
+    studentCollection = db.collection('students');
+  })
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
+app.get('/', (req, res) => {
+  res.send(`
+    <form method="post">
+      <input name="Name" placeholder="Name" required />
+      <input name="USN" placeholder="USN" required />
+      <input name="Marks" placeholder="Marks" type="number" required />
+      <button>Submit</button>
+    </form>
+    <a href="/noteligible">Show Not Eligible Students (Marks < 20)</a>
+  `);
 });
 
-app.get('/noteligible', async (req,res) => {
-  const ne = await Student.find({Marks: {$lt: 20}});
-  res.send(ne.map(s => `${s.Name} (${s.USN}) - Marks: ${s.Marks}<br>`).join('') + '<br><a href="/">Back</a>');
+app.post('/', async (req, res) => {
+  try {
+    const student = {
+      Name: req.body.Name,
+      USN: req.body.USN,
+      Marks: Number(req.body.Marks),
+    };
+    await studentCollection.insertOne(student);
+    res.redirect('/');
+  } catch (err) {
+    console.error('❌ Error inserting student:', err);
+    res.status(500).send('Error adding student');
+  }
+});
+
+app.get('/noteligible', async (req, res) => {
+  try {
+    const notEligibleStudents = await studentCollection.find({ Marks: { $lt: 20 } }).toArray();
+    const html = notEligibleStudents
+      .map(s => `${s.Name} (${s.USN}) - Marks: ${s.Marks}<br>`)
+      .join('') + '<br><a href="/">Back</a>';
+    res.send(html);
+  } catch (err) {
+    console.error('❌ Error fetching students:', err);
+    res.status(500).send('Error fetching students');
+  }
 });
 
 app.listen(3002, () => console.log('✅ Server running at http://localhost:3002'));
