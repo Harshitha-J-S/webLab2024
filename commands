@@ -1,0 +1,13 @@
+mongo connection  :
+sudo apt update
+sudo apt install -y mongodb
+
+sudo systemctl start mongodb
+sudo systemctl enable mongodb
+
+run command - mongosh or mongo
+
+
+before running any program : 
+npm init -y
+npm install express mongoose

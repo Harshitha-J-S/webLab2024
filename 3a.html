@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <input id="price" type="number" placeholder="Base Price" />
+  <input id="tax" type="number" placeholder="Tax %" />
+  <button onclick="showPrice()">Calculate</button>
+  <p id="result"></p>
+
+  <script>
+    function netPrice(base) {
+      return function(taxRate) {
+        return base + (base * taxRate / 100);
+      };
+    }
+
+    function showPrice() {
+      const base = parseFloat(document.getElementById("price").value);
+      const tax = parseFloat(document.getElementById("tax").value);
+      const total = netPrice(base)(tax);
+      document.getElementById("result").innerText = `Net Price: ₹${total.toFixed(2)}`;
+    }
+  </script>
+</body>
+</html>

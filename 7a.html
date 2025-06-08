@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<body>
+  <h2>Student Registration Form</h2>
+<form>
+  <input name="name" required pattern="[A-Za-z\s]+" placeholder="Name"/><br>
+  <input type="email" name="email" placeholder="Enter valid email"/><br>
+  <input pattern="\d{3}-\d{3}-\d{4}" placeholder="080-555-5555"/><br>
+  <input type="number" min="1" max="8" placeholder="Semester"/><br>
+  <input list="branches" name="branch" placeholder="Choose branch">
+  <datalist id="branches"><option>CSE</option><option>ECE</option></datalist><br>
+  <input type="url" required pattern="http://.+" placeholder="Website"/><br>
+  <button>Submit</button>
+</form>
+</body>
+</html>
